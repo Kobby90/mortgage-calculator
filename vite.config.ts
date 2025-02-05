@@ -12,5 +12,5 @@ export default defineConfig({
   server: {
     port: 3000
   },
-  base: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/` : '/'
+  base: '/'
 });
