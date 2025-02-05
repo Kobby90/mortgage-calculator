@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import type { ChangeEvent } from 'react';
 import './MortgageCalculator.css';
 import * as XLSX from 'xlsx';
 
@@ -8,9 +9,9 @@ interface LoanDetails {
   downPayment: number;
   arrangementFeeRate: number;
   propertyInsuranceRate: number;
-  loanTerm: { years: number; months: number };
-  paymentFrequency: 'monthly' | 'biweekly' | 'weekly';
+  loanTerm: number;
   firstPaymentDate: string;
+  paymentFrequency: 'monthly' | 'biweekly' | 'weekly';
 }
 
 interface Errors {
@@ -21,12 +22,15 @@ interface Errors {
   propertyInsuranceRate?: string;
   loanTerm?: string;
   firstPaymentDate?: string;
+  calculation?: string;
+  email?: string;
+  submit?: string;
 }
 
 interface CalculationResults {
-  monthlyPayment: number;
-  totalPayment: number;
-  totalInterest: number;
+  monthlyPayment: string;
+  totalPayment: string;
+  totalInterest: string;
   amortizationSchedule: AmortizationRow[];
 }
 
@@ -53,24 +57,24 @@ interface InputFieldProps {
   type?: string;
 }
 
-const formatCurrency = (value: number): string => {
-  if (!value) return '0.00';
-  return Number(value).toLocaleString('en-GH', {
+const formatCurrency = (value: number | string): string => {
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+    maximumFractionDigits: 2,
+  }).format(numValue);
 };
 
-const MortgageCalculator = () => {
+const MortgageCalculator: React.FC = () => {
   const [loanDetails, setLoanDetails] = useState<LoanDetails>({
-    loanBalance: 1,
-    interestRate: 1,
+    loanBalance: 0,
+    interestRate: 0,
     downPayment: 0,
     arrangementFeeRate: 0,
     propertyInsuranceRate: 0,
-    loanTerm: { years: 1, months: 0 },
-    paymentFrequency: 'monthly',
-    firstPaymentDate: '2025-01-01'
+    loanTerm: 30,
+    firstPaymentDate: new Date().toISOString().split('T')[0],
+    paymentFrequency: 'monthly'
   });
 
   const [results, setResults] = useState<CalculationResults | null>(null);
@@ -82,103 +86,95 @@ const MortgageCalculator = () => {
   const [errors, setErrors] = useState<Errors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const validateInputs = () => {
+  const validateInputs = (): boolean => {
     const newErrors: Errors = {};
-    
-    if (!loanDetails.loanBalance || loanDetails.loanBalance <= 0)
+
+    if (loanDetails.loanBalance <= 0) {
       newErrors.loanBalance = 'Loan balance must be greater than 0';
-    
-    if (!loanDetails.interestRate || loanDetails.interestRate <= 0)
+    }
+
+    if (loanDetails.interestRate <= 0) {
       newErrors.interestRate = 'Interest rate must be greater than 0';
-    
-    if (loanDetails.downPayment < 0)
+    }
+
+    if (loanDetails.downPayment < 0) {
       newErrors.downPayment = 'Down payment cannot be negative';
-    
-    if (loanDetails.downPayment >= loanDetails.loanBalance)
+    }
+
+    if (loanDetails.downPayment >= loanDetails.loanBalance) {
       newErrors.downPayment = 'Down payment cannot exceed loan amount';
-    
-    if (loanDetails.arrangementFeeRate < 0)
+    }
+
+    if (loanDetails.arrangementFeeRate < 0) {
       newErrors.arrangementFeeRate = 'Arrangement fee rate cannot be negative';
-    
-    if (loanDetails.propertyInsuranceRate < 0)
+    }
+
+    if (loanDetails.propertyInsuranceRate < 0) {
       newErrors.propertyInsuranceRate = 'Property insurance rate cannot be negative';
-    
-    if (loanDetails.loanTerm.years === 0 && loanDetails.loanTerm.months === 0)
+    }
+
+    if (loanDetails.loanTerm <= 0) {
       newErrors.loanTerm = 'Loan term must be greater than 0';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const calculateMortgage = () => {
-    if (!validateInputs()) {
-      return;
-    }
-    setIsSubmitting(true);
-    
+    if (!validateInputs()) return;
+
     try {
       const principal = loanDetails.loanBalance - loanDetails.downPayment;
-      const monthlyRate = loanDetails.interestRate / 100 / 12;
-      const totalMonths = (loanDetails.loanTerm.years * 12) + loanDetails.loanTerm.months;
-      
-      // Calculate one-time fees
-      const arrangementFee = (loanDetails.arrangementFeeRate / 100) * principal;
-      const propertyInsurance = (loanDetails.propertyInsuranceRate / 100) * principal;
-      
-      const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) 
-                            / (Math.pow(1 + monthlyRate, totalMonths) - 1);
-      
-      const totalPayment = (monthlyPayment * totalMonths) + arrangementFee + propertyInsurance;
-      const totalInterest = (monthlyPayment * totalMonths) - principal;
+      const monthlyRate = (loanDetails.interestRate / 100) / 12;
+      const numberOfPayments = loanDetails.loanTerm * 12;
 
-      // Generate amortization schedule
-      let balance = principal;
+      const monthlyPayment = 
+        (principal * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) /
+        (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+
+      const totalPayment = monthlyPayment * numberOfPayments;
+      const totalInterest = totalPayment - principal;
+
       const schedule: AmortizationRow[] = [];
+      let balance = principal;
+      let currentDate = new Date(loanDetails.firstPaymentDate);
 
-      // Add initial fees as first entry
-      if (arrangementFee > 0 || propertyInsurance > 0) {
-        schedule.push({
-          period: 0,
-          date: new Date(loanDetails.firstPaymentDate).toLocaleDateString(),
-          payment: (arrangementFee + propertyInsurance).toFixed(2),
-          principalPaid: '0.00',
-          interest: '0.00',
-          balance: balance.toFixed(2),
-          isInitialFee: true,
-          feeBreakdown: {
-            arrangementFee: arrangementFee.toFixed(2),
-            propertyInsurance: propertyInsurance.toFixed(2)
-          }
-        });
-      }
-
-      // Regular payment schedule
-      for (let i = 1; i <= totalMonths; i++) {
+      for (let i = 1; i <= numberOfPayments; i++) {
         const interest = balance * monthlyRate;
         const principalPaid = monthlyPayment - interest;
         balance -= principalPaid;
 
+        const arrangementFee = i === 1 ? principal * (loanDetails.arrangementFeeRate / 100) : 0;
+        const propertyInsurance = i === 1 ? principal * (loanDetails.propertyInsuranceRate / 100) : 0;
+
         schedule.push({
           period: i,
-          date: new Date(loanDetails.firstPaymentDate).toLocaleDateString(),
-          payment: monthlyPayment.toFixed(2),
-          principalPaid: principalPaid.toFixed(2),
-          interest: interest.toFixed(2),
-          balance: Math.max(0, balance).toFixed(2)
+          date: currentDate.toISOString().split('T')[0],
+          payment: formatCurrency(monthlyPayment),
+          principalPaid: formatCurrency(principalPaid),
+          interest: formatCurrency(interest),
+          balance: formatCurrency(Math.max(0, balance)),
+          isInitialFee: i === 1,
+          feeBreakdown: {
+            arrangementFee: formatCurrency(arrangementFee),
+            propertyInsurance: formatCurrency(propertyInsurance)
+          }
         });
+
+        currentDate.setMonth(currentDate.getMonth() + 1);
       }
 
       setResults({
-        monthlyPayment: monthlyPayment.toFixed(2),
-        totalPayment: totalPayment.toFixed(2),
-        totalInterest: totalInterest.toFixed(2),
+        monthlyPayment: formatCurrency(monthlyPayment),
+        totalPayment: formatCurrency(totalPayment),
+        totalInterest: formatCurrency(totalInterest),
         amortizationSchedule: schedule
       });
+      
+      setErrors({});
     } catch (error) {
-      console.error('Calculation error:', error);
-      setErrors({ calculation: 'Error calculating mortgage details' });
-    } finally {
-      setIsSubmitting(false);
+      setErrors(prev => ({ ...prev, calculation: 'Error calculating mortgage details' }));
     }
   };
 
@@ -194,11 +190,10 @@ const MortgageCalculator = () => {
     error, 
     type = 'number' 
   }) => {
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
       if (type === 'number') {
-        // Only update if it's a valid number or empty
-        if (newValue === '' || !isNaN(newValue)) {
+        if (newValue === '' || !Number.isNaN(parseFloat(newValue))) {
           onChange(newValue === '' ? 0 : parseFloat(newValue));
         }
       } else {
@@ -208,15 +203,14 @@ const MortgageCalculator = () => {
 
     return (
       <div className="input-group">
-        <label>{label}</label>
+        <label htmlFor={name}>{label}</label>
         <input
           type={type}
+          id={name}
           name={name}
-          value={value || ''}
+          value={value}
           onChange={handleChange}
           className={error ? 'error' : ''}
-          min="0"
-          step="any"
         />
         {error && <span className="error-message">{error}</span>}
       </div>
@@ -247,7 +241,7 @@ const MortgageCalculator = () => {
       ['Arrangement Fee Rate', `${loanDetails.arrangementFeeRate}%`],
       ['Property Insurance Rate', `${loanDetails.propertyInsuranceRate}%`],
       ['Down Payment', `GHC ${formatCurrency(loanDetails.downPayment)}`],
-      ['Loan Term', `${loanDetails.loanTerm.years} years ${loanDetails.loanTerm.months} months`],
+      ['Loan Term', `${loanDetails.loanTerm} years`],
       ['Payment Frequency', loanDetails.paymentFrequency],
       ['First Payment Date', loanDetails.firstPaymentDate]
     ];
@@ -305,7 +299,7 @@ const MortgageCalculator = () => {
         ['Arrangement Fee Rate', `${loanDetails.arrangementFeeRate}%`],
         ['Property Insurance Rate', `${loanDetails.propertyInsuranceRate}%`],
         ['Down Payment', `GHC ${formatCurrency(loanDetails.downPayment)}`],
-        ['Loan Term', `${loanDetails.loanTerm.years} years ${loanDetails.loanTerm.months} months`],
+        ['Loan Term', `${loanDetails.loanTerm} years`],
         ['Payment Frequency', loanDetails.paymentFrequency],
         ['First Payment Date', loanDetails.firstPaymentDate]
       ];
@@ -414,27 +408,14 @@ const MortgageCalculator = () => {
                 <div className="term-input">
                   <input
                     type="number"
-                    value={loanDetails.loanTerm.years}
+                    value={loanDetails.loanTerm}
                     onChange={(e) => setLoanDetails({
                       ...loanDetails,
-                      loanTerm: { ...loanDetails.loanTerm, years: Number(e.target.value) }
+                      loanTerm: Number(e.target.value)
                     })}
                     min="0"
                   />
                   <span>years</span>
-                </div>
-                <div className="term-input">
-                  <input
-                    type="number"
-                    value={loanDetails.loanTerm.months}
-                    onChange={(e) => setLoanDetails({
-                      ...loanDetails,
-                      loanTerm: { ...loanDetails.loanTerm, months: Number(e.target.value) }
-                    })}
-                    min="0"
-                    max="11"
-                  />
-                  <span>months</span>
                 </div>
               </div>
               {errors.loanTerm && <span className="error-message">{errors.loanTerm}</span>}

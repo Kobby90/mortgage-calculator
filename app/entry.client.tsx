@@ -4,5 +4,14 @@ import routes from './routes';
 
 const router = createBrowserRouter(routes);
 
-const root = createRoot(document.getElementById('root')!);
-root.render(<RouterProvider router={router} />); 
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', () => {
+  const rootElement = document.getElementById('root');
+  
+  if (!rootElement) {
+    throw new Error('Root element not found. Make sure there is a <div id="root"></div> in your HTML');
+  }
+
+  const root = createRoot(rootElement);
+  root.render(<RouterProvider router={router} />);
+}); 
