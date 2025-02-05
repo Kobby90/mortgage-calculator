@@ -5,7 +5,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
-  base: '/mortgage-calculator/',
+  base: '/',
   build: {
     outDir: 'build/client',
     sourcemap: true,

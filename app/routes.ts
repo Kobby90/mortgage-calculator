@@ -1,16 +1,17 @@
 import { type RouteConfig } from "@react-router/dev/routes";
 
-const routes: RouteConfig = [
+const routes: RouteConfig[] = [
   {
     path: "/",
     file: "root.tsx",
     children: [
       {
-        path: "mortgage-calculator",
-        file: "routes/home.tsx"
+        index: true,
+        file: "routes/home.tsx",
+        id: "home"
       }
     ]
   }
 ];
 
-export default routes; 
+export default routes;
