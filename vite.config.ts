@@ -10,7 +10,12 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       input: './index.html',
-      external: ['react-router-dom']
+      external: [
+        'react',
+        'react-dom',
+        'react-router',
+        'react-router-dom'
+      ]
     }
   },
   server: {
@@ -18,6 +23,12 @@ export default defineConfig({
   },
   base: '/',
   resolve: {
-    extensions: ['.js', '.jsx', '.ts', '.tsx']
+    extensions: ['.js', '.jsx', '.ts', '.tsx'],
+    alias: {
+      '~': '/app'
+    }
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router', 'react-router-dom']
   }
 });
