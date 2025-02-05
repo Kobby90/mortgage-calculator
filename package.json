@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist",
+    "deploy": "gh-pages -d build/client",
     "build": "vite build",
     "dev": "react-router dev",
     "start": "react-router start",
