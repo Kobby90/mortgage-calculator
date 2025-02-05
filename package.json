@@ -6,7 +6,8 @@
     "build": "vite build",
     "dev": "react-router dev",
     "start": "react-router start",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "predev": "rimraf .react-router || true"
   },
   "dependencies": {
     "@react-router/node": "^7.1.5",
