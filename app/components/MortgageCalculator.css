@@ -1,0 +1,335 @@
+.mortgage-calculator {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.calculator-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.results-summary {
+  background: #6b1b9a;
+  color: rgba(255, 255, 255, 0.95);
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.result-item h3 {
+  margin: 0;
+  font-weight: normal;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.result-item h2 {
+  margin: 0.5rem 0 0;
+  font-size: 2rem;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.calculator-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.input-section {
+  margin-bottom: 1.5rem;
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.input-group {
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #2d3748;
+  font-weight: 500;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #1a202c;
+  background-color: #ffffff;
+}
+
+.input-group input.error {
+  border-color: #dc3545;
+  background-color: #fff8f8;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.save-button {
+  padding: 0.75rem 1.5rem;
+  background: #1f1f1f;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.save-button:hover {
+  background: #333;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.save-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.email-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.terms-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.terms-checkbox input[type="checkbox"] {
+  margin-top: 0.25rem;
+}
+
+.payment-frequency .frequency-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.frequency-buttons button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #c7c4c4;
+  border-radius: 20px;
+  background: rgb(255, 255, 255);
+  text-align: center;
+  color: #000000;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.frequency-buttons button.active {
+  background: #6b1b9a;
+  color: white;
+  border-color: #6b1b9a;
+}
+
+.amortization-schedule {
+  background: #f8f9fa;
+  margin-top: 2rem;
+  overflow-x: auto;
+}
+
+.amortization-schedule table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.amortization-schedule th,
+.amortization-schedule td {
+  padding: 0.75rem;
+  text-align: left;
+  color: #2d3748;
+  border-bottom: 1px solid #ddd;
+}
+
+.amortization-schedule th {
+  background: #f5f5f5;
+  font-weight: 500;
+
+}
+
+.loan-term-group {
+  margin-bottom: 1.5rem;
+}
+
+.loan-term-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #2d3748;
+  font-weight: 500;
+}
+
+.loan-term-inputs {
+  display: flex;
+  gap: 1rem;
+}
+
+.term-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.term-input input {
+  width: 80px;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #1a202c;
+  background-color: #ffffff;
+}
+
+.term-input span {
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+/* Update the date input styling */
+input[type="date"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #1a202c;
+  background-color: #ffffff;
+}
+
+.results-section {
+  background: #ffffff;
+}
+
+.save-results-section {
+  background: #1f1f1f;
+  color: white;
+  padding: 1.5rem 2rem;
+}
+
+.save-results-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.save-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.email-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.email-input-group input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 0.9rem;
+}
+
+.email-input-group input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.send-button {
+  padding: 0.75rem 1.5rem;
+  background: #6b1b9a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.send-button:hover {
+  background: #581580;
+}
+
+.send-button:disabled {
+  background: #4a4a4a;
+  cursor: not-allowed;
+}
+
+.terms-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.terms-checkbox a {
+  color: white;
+  text-decoration: none;
+}
+
+.terms-checkbox a:hover {
+  text-decoration: underline;
+}
+
+.terms-checkbox input[type="checkbox"] {
+  margin-top: 0.2rem;
+}
+
+.save-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin: 1rem 0;
+}
+
+.download-button {
+  padding: 0.75rem 1.5rem;
+  background: #1f1f1f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.download-button:hover {
+  background: #333;
+} 
