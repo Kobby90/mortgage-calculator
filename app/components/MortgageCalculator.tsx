@@ -2,7 +2,58 @@ import React, { useState, useEffect } from 'react';
 import './MortgageCalculator.css';
 import * as XLSX from 'xlsx';
 
-const formatCurrency = (value) => {
+interface LoanDetails {
+  loanBalance: number;
+  interestRate: number;
+  downPayment: number;
+  arrangementFeeRate: number;
+  propertyInsuranceRate: number;
+  loanTerm: { years: number; months: number };
+  paymentFrequency: 'monthly' | 'biweekly' | 'weekly';
+  firstPaymentDate: string;
+}
+
+interface Errors {
+  loanBalance?: string;
+  interestRate?: string;
+  downPayment?: string;
+  arrangementFeeRate?: string;
+  propertyInsuranceRate?: string;
+  loanTerm?: string;
+  firstPaymentDate?: string;
+}
+
+interface CalculationResults {
+  monthlyPayment: number;
+  totalPayment: number;
+  totalInterest: number;
+  amortizationSchedule: AmortizationRow[];
+}
+
+interface AmortizationRow {
+  period: number;
+  date: string;
+  payment: string;
+  principalPaid: string;
+  interest: string;
+  balance: string;
+  isInitialFee: boolean;
+  feeBreakdown: {
+    arrangementFee: string;
+    propertyInsurance: string;
+  };
+}
+
+interface InputFieldProps {
+  label: string;
+  name: string;
+  value: number | string;
+  onChange: (value: number | string) => void;
+  error?: string;
+  type?: string;
+}
+
+const formatCurrency = (value: number): string => {
   if (!value) return '0.00';
   return Number(value).toLocaleString('en-GH', {
     minimumFractionDigits: 2,
@@ -11,33 +62,28 @@ const formatCurrency = (value) => {
 };
 
 const MortgageCalculator = () => {
-  const [loanDetails, setLoanDetails] = useState({
+  const [loanDetails, setLoanDetails] = useState<LoanDetails>({
     loanBalance: 1,
     interestRate: 1,
     downPayment: 0,
     arrangementFeeRate: 0,
     propertyInsuranceRate: 0,
     loanTerm: { years: 1, months: 0 },
-    paymentFrequency: 'Monthly',
+    paymentFrequency: 'monthly',
     firstPaymentDate: '2025-01-01'
   });
 
-  const [results, setResults] = useState({
-    monthlyPayment: 0,
-    totalPayment: 0,
-    totalInterest: 0,
-    amortizationSchedule: []
-  });
+  const [results, setResults] = useState<CalculationResults | null>(null);
 
   const [showSchedule, setShowSchedule] = useState(true);
   const [email, setEmail] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Errors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateInputs = () => {
-    const newErrors = {};
+    const newErrors: Errors = {};
     
     if (!loanDetails.loanBalance || loanDetails.loanBalance <= 0)
       newErrors.loanBalance = 'Loan balance must be greater than 0';
@@ -87,7 +133,7 @@ const MortgageCalculator = () => {
 
       // Generate amortization schedule
       let balance = principal;
-      const schedule = [];
+      const schedule: AmortizationRow[] = [];
 
       // Add initial fees as first entry
       if (arrangementFee > 0 || propertyInsurance > 0) {
@@ -140,8 +186,15 @@ const MortgageCalculator = () => {
     calculateMortgage();
   }, [loanDetails]);
 
-  const InputField = ({ label, name, value, onChange, error, type = 'number' }) => {
-    const handleChange = (e) => {
+  const InputField: React.FC<InputFieldProps> = ({ 
+    label, 
+    name, 
+    value, 
+    onChange, 
+    error, 
+    type = 'number' 
+  }) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
       if (type === 'number') {
         // Only update if it's a valid number or empty
@@ -170,7 +223,7 @@ const MortgageCalculator = () => {
     );
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setLoanDetails(prev => ({
       ...prev,
@@ -281,91 +334,54 @@ const MortgageCalculator = () => {
   return (
     <div className="mortgage-calculator">
       <div className="calculator-container">
-        <div className="results-section">
+        {results && (
           <div className="results-summary">
             <div className="result-item">
               <h3>Monthly Payment</h3>
-              <h2>GHC {formatCurrency(results.monthlyPayment)}</h2>
+              <h2>{formatCurrency(results.monthlyPayment)}</h2>
             </div>
             <div className="result-item">
               <h3>Total Payment</h3>
-              <h2>GHC {formatCurrency(results.totalPayment)}</h2>
+              <h2>{formatCurrency(results.totalPayment)}</h2>
             </div>
             <div className="result-item">
               <h3>Total Interest</h3>
-              <h2>GHC {formatCurrency(results.totalInterest)}</h2>
+              <h2>{formatCurrency(results.totalInterest)}</h2>
             </div>
           </div>
-          
-          <div className="save-results-section">
-            <div className="save-results-container">
-              <button 
-                className="save-button"
-                onClick={generateAndDownloadExcel}
-              >
-                📩 Save Results
-              </button>
-              <div className="email-input-group">
-                <input
-                  type="email"
-                  placeholder="mail@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                <button 
-                  className="send-button"
-                  onClick={handleSaveResults}
-                  disabled={isSubmitting}
-                >
-                  Send to Email
-                </button>
-              </div>
-              <div className="terms-checkbox">
-                <input
-                  type="checkbox"
-                  checked={acceptTerms}
-                  onChange={(e) => setAcceptTerms(e.target.checked)}
-                  id="terms"
-                />
-                <label htmlFor="terms">
-                  Please accept our <a href="#">Privacy Policy</a> and <a href="#">Terms and Conditions</a> to proceed.
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-        
+        )}
+
         <div className="calculator-grid">
-          <div className="input-section">         
+          <div className="input-section">
             <InputField
-              label="Loan Balance"
+              label="Loan Balance ($)"
               name="loanBalance"
               value={loanDetails.loanBalance}
               onChange={(value) => setLoanDetails(prev => ({
                 ...prev,
-                loanBalance: value
+                loanBalance: Number(value)
               }))}
               error={errors.loanBalance}
             />
 
             <InputField
-              label="Interest Rate"
+              label="Interest Rate (%)"
               name="interestRate"
               value={loanDetails.interestRate}
               onChange={(value) => setLoanDetails(prev => ({
                 ...prev,
-                interestRate: value
+                interestRate: Number(value)
               }))}
               error={errors.interestRate}
             />
 
             <InputField
-              label="Down Payment"
+              label="Down Payment ($)"
               name="downPayment"
               value={loanDetails.downPayment}
               onChange={(value) => setLoanDetails(prev => ({
                 ...prev,
-                downPayment: value
+                downPayment: Number(value)
               }))}
               error={errors.downPayment}
             />
@@ -376,7 +392,7 @@ const MortgageCalculator = () => {
               value={loanDetails.arrangementFeeRate}
               onChange={(value) => setLoanDetails(prev => ({
                 ...prev,
-                arrangementFeeRate: value
+                arrangementFeeRate: Number(value)
               }))}
               error={errors.arrangementFeeRate}
             />
@@ -387,7 +403,7 @@ const MortgageCalculator = () => {
               value={loanDetails.propertyInsuranceRate}
               onChange={(value) => setLoanDetails(prev => ({
                 ...prev,
-                propertyInsuranceRate: value
+                propertyInsuranceRate: Number(value)
               }))}
               error={errors.propertyInsuranceRate}
             />
@@ -424,61 +440,77 @@ const MortgageCalculator = () => {
               {errors.loanTerm && <span className="error-message">{errors.loanTerm}</span>}
             </div>
 
-            <InputField
-              label="Date of First Payment"
-              name="firstPaymentDate"
-              type="date"
-              value={loanDetails.firstPaymentDate}
-              onChange={(e) => setLoanDetails({...loanDetails, firstPaymentDate: e.target.value})}
-              error={errors.firstPaymentDate}
-            />
+            <div className="input-group">
+              <label>First Payment Date</label>
+              <input
+                type="date"
+                value={loanDetails.firstPaymentDate}
+                onChange={(e) => setLoanDetails({...loanDetails, firstPaymentDate: e.target.value})}
+                error={errors.firstPaymentDate}
+              />
+            </div>
 
             <div className="payment-frequency">
               <label>Payment Frequency</label>
               <div className="frequency-buttons">
-                {['Annually', 'Semi-annually', 'Quarterly', 'Monthly', 'Fortnightly'].map(freq => (
-                  <button
-                    key={freq}
-                    className={loanDetails.paymentFrequency === freq ? 'active' : ''}
-                    onClick={() => setLoanDetails({...loanDetails, paymentFrequency: freq})}
-                  >
-                    {freq}
-                  </button>
-                ))}
+                <button
+                  className={loanDetails.paymentFrequency === 'monthly' ? 'active' : ''}
+                  onClick={() => setLoanDetails({...loanDetails, paymentFrequency: 'monthly'})}
+                >
+                  Monthly
+                </button>
+                <button
+                  className={loanDetails.paymentFrequency === 'biweekly' ? 'active' : ''}
+                  onClick={() => setLoanDetails({...loanDetails, paymentFrequency: 'biweekly'})}
+                >
+                  Bi-weekly
+                </button>
+                <button
+                  className={loanDetails.paymentFrequency === 'weekly' ? 'active' : ''}
+                  onClick={() => setLoanDetails({...loanDetails, paymentFrequency: 'weekly'})}
+                >
+                  Weekly
+                </button>
               </div>
             </div>
+
+            <button
+              className="save-button"
+              onClick={calculateMortgage}
+            >
+              Calculate
+            </button>
           </div>
 
-          <div className="results-section">
-            {showSchedule && (
-              <div className="amortization-schedule">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Period</th>
-                      <th>Due Date</th>
-                      <th>Payment (GHC)</th>
-                      <th>Principal (GHC)</th>
-                      <th>Interest (GHC)</th>
-                      <th>Balance (GHC)</th>
+          {results && (
+            <div className="amortization-schedule">
+              <h3>Amortization Schedule</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Period</th>
+                    <th>Date</th>
+                    <th>Payment</th>
+                    <th>Principal</th>
+                    <th>Interest</th>
+                    <th>Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {results.amortizationSchedule.map(row => (
+                    <tr key={row.period}>
+                      <td>{row.period}</td>
+                      <td>{row.date}</td>
+                      <td>{row.payment}</td>
+                      <td>{row.principalPaid}</td>
+                      <td>{row.interest}</td>
+                      <td>{row.balance}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {results.amortizationSchedule.map((row) => (
-                      <tr key={row.period}>
-                        <td>{row.period}</td>
-                        <td>{row.date}</td>
-                        <td>{row.payment}</td>
-                        <td>{row.principalPaid}</td>
-                        <td>{row.interest}</td>
-                        <td>{row.balance}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
