@@ -9,7 +9,8 @@ export default defineConfig({
     outDir: 'build/client',
     sourcemap: true,
     rollupOptions: {
-      input: './index.html'
+      input: './index.html',
+      external: ['react-router-dom']
     }
   },
   server: {
