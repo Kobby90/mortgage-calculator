@@ -23,10 +23,7 @@ export default defineConfig({
     port: 3000
   },
   resolve: {
-    extensions: ['.js', '.jsx', '.ts', '.tsx'],
-    alias: {
-      '~': '/app'
-    }
+    extensions: ['.js', '.jsx', '.ts', '.tsx']
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router', 'react-router-dom']
