@@ -9,13 +9,14 @@ export default defineConfig({
     outDir: 'build/client',
     sourcemap: true,
     rollupOptions: {
-      input: {
-        main: './index.html'
-      }
+      input: './index.html'
     }
   },
   server: {
     port: 3000
   },
-  base: '/'
+  base: '/',
+  resolve: {
+    extensions: ['.js', '.jsx', '.ts', '.tsx']
+  }
 });
