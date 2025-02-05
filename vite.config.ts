@@ -20,12 +20,20 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000
+    port: 3000,
+    middlewareMode: 'html'
   },
   resolve: {
-    extensions: ['.js', '.jsx', '.ts', '.tsx']
+    extensions: ['.js', '.jsx', '.ts', '.tsx'],
+    alias: {
+      '@': '/app'
+    }
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router', 'react-router-dom']
+  },
+  esbuild: {
+    loader: 'tsx',
+    include: /\.tsx?$/
   }
 });
